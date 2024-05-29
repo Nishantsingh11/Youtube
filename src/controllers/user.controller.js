@@ -187,5 +187,11 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     );
   }
 });
-
+const changePassword = asyncHandler(async(req,res)=>{
+  // get the oldpasssword and newpassword from the user
+  // get the user id from the jwt
+  // using the id find the user 
+  // check for the password or chamare them whether it is correct or not 
+  // save the password 
+})
 export { registerUser, loginUser, logoutUser, refreshAccessToken };
