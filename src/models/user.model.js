@@ -52,14 +52,14 @@ const userSchema = new Schema(
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next(); // this helps to hash the password only if the user has change the password otherwise is will call next fucntion
   this.password = await bcrypt.hash(this.password, 10);
-  next()
+  next();
 });
 // method to compare the password
 userSchema.methods.isPasswordCorrect = async function (password) {
   return await bcrypt.compare(password, this.password); //help to compare the password then it return true and false
 };
 userSchema.methods.generateAccessToken = function () {
-  jwt.sign(
+  return jwt.sign(
     {
       _id: this._id,
       username: this.username,
@@ -67,16 +67,16 @@ userSchema.methods.generateAccessToken = function () {
       fullName: this.fullName,
     },
     process.env.ACCESS_TOKEN,
-    { expiresIn: ACCESS_TOKEN_EXPAIRY }
+    { expiresIn: process.env.ACCESS_TOKEN_EXPAIRY }
   );
 };
 userSchema.methods.generateRefreshToken = function () {
-  jwt.sign(
+  return jwt.sign(
     {
       _id: this._id,
     },
     process.env.REFRESH_TOKEN,
-    { expiresIn: REFRESH_TOKEN_EXPAIRY }
+    { expiresIn: process.env.REFRESH_TOKEN_EXPAIRY }
   );
 };
 export const User = model("User", userSchema);
