@@ -29,7 +29,7 @@ const userSchema = new Schema(
       type: String,
       required: true,
     },
-    coverimage: {
+    coverImage: {
       type: String,
     },
     watchhistory: [
@@ -49,10 +49,10 @@ const userSchema = new Schema(
   { timestamps: true }
 );
 
-userSchema.pre("save", async function (req, res, next) {
+userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next(); // this helps to hash the password only if the user has change the password otherwise is will call next fucntion
-  this.password = bcrypt.hash(this.password, 10);
-  next();
+  this.password = await bcrypt.hash(this.password, 10);
+  next()
 });
 // method to compare the password
 userSchema.methods.isPasswordCorrect = async function (password) {
