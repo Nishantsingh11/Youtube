@@ -187,11 +187,111 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     );
   }
 });
-const changePassword = asyncHandler(async(req,res)=>{
+const changeCurrentPassword = asyncHandler(async (req, res) => {
   // get the oldpasssword and newpassword from the user
   // get the user id from the jwt
-  // using the id find the user 
-  // check for the password or chamare them whether it is correct or not 
-  // save the password 
-})
-export { registerUser, loginUser, logoutUser, refreshAccessToken };
+  // using the id find the user
+  // check for the password or chamare them whether it is correct or not
+  // save the password
+  const { oldPassword, newPassword } = req.body;
+  const user = await User.findById(req.user?._id);
+  if (!user) {
+    throw new ApiError(404, "User is not authorise to change the password ");
+  }
+  const isOldPasswordCorrect = await user.isPasswordCorrect(oldPassword);
+  if (!isOldPasswordCorrect) {
+    throw new ApiError(401, "Please Enter Your current password");
+  }
+  user.password = newPassword;
+  await user.save({ validateBeforeSave: false });
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Password change successfully"));
+});
+const getCurrentUser = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
+  if (!user) {
+    throw new ApiError(404, "Something went wrong uable to find the user ");
+  }
+  res.status(200).json(new ApiResponse(200, user, "Currrent User Info"));
+});
+const updateUserDetailes = asyncHandler(async (req, res) => {
+  // todo
+  // get the updated fields we are only updateing the full name and the email
+  // find the user._id using the jwt
+  // set the new data to db then set it as new
+  // **NOTE**: For the files we need to take diffrent aprroch
+  const { fullName, email } = req.body;
+  if (!fullName || !email) {
+    throw new ApiError(
+      400,
+      "Fullname and email is required to update the info"
+    );
+  }
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: {
+        fullName,
+        email,
+      },
+    },
+    { new: true }
+  );
+});
+const updateUserAvatar = asyncHandler(async (req, res) => {
+  const avatarLocalPath = req.file?.path;
+  if (!avatarLocalPath) {
+    throw new ApiError(400, "Avatar is requied for the update");
+  }
+  const avatar = await uploadOnCloudinary(avatarLocalPath);
+  if (!avatar) {
+    throw new ApiError(400, "Error while uploading the on cloudyanary");
+  }
+  console.log(avatar);
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: {
+        avatar,
+      },
+    },
+    { new: true }
+  ).select("-password");
+  return res.status(200).json(new ApiResponse(200, user, "Avatar is updated"));
+});
+const updateUserCoverImage = asyncHandler(async (req, res) => {
+  const coverImageLocalPath = req.file?.path;
+  if (!coverImageLocalPath) {
+    throw new ApiError(400, "Cover Image is requied for the update");
+  }
+  const coverImage = await uploadOnCloudinary(coverImageLocalPath);
+  if (!coverImage) {
+    throw new ApiError(400, "Error while uploading the on cloudyanary");
+  }
+  console.log(coverImage);
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: {
+        coverImage,
+      },
+    },
+    { new: true }
+  ).select("-password");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "Cover immage is updated"));
+});
+export {
+  registerUser,
+  loginUser,
+  logoutUser,
+  refreshAccessToken,
+  changeCurrentPassword,
+  getCurrentUser,
+  updateUserDetailes,
+  updateUserAvatar,
+  updateUserCoverImage,
+};
