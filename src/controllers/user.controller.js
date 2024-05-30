@@ -49,7 +49,7 @@ const registerUser = asyncHandler(async (req, res) => {
   const avatar = await uploadOnCloudinary(avatarLocalPath);
   const coverImage = await uploadOnCloudinary(coverImageLocalPath);
   if (!avatar) {
-    throw new ApiError(409, "Avatar is requured ");
+    throw new ApiError(409, "Avatar is requured");
   }
   const user = await User.create({
     fullName,
