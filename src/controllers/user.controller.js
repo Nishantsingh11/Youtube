@@ -15,11 +15,9 @@ const generateAccessAndrefreshToken = async (userId) => {
     await user.save({ validateBeforeSave: false });
     return { accessToken, refreshToken };
   } catch (err) {
-    console.log(err);
     throw new ApiError(500, "Something went wrong while genrating the tokens");
   }
 };
-
 const registerUser = asyncHandler(async (req, res) => {
   // todo for the register user
   // 1. get the (username,email,fullName,password,avatar,coverImage)
@@ -67,7 +65,6 @@ const registerUser = asyncHandler(async (req, res) => {
   if (!createdUser) {
     throw new ApiError(500, "somthing went wrong while creating th user");
   }
-  console.log("for the creadted user", createdUser);
   return res
     .status(201)
     .json(new ApiResponse(200, createdUser, "User Created Successfully"));
@@ -128,8 +125,8 @@ const logoutUser = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(
     req.user._id,
     {
-      $set: {
-        refreshToken: undefined,
+      $unset: {
+        refreshToken: 1,
       },
     },
     {
@@ -195,6 +192,9 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
   // check for the password or chamare them whether it is correct or not
   // save the password
   const { oldPassword, newPassword } = req.body;
+  if (!oldPassword || !newPassword) {
+    throw new ApiError(400, "Old password and new password is required");
+  }
   const user = await User.findById(req.user?._id);
   if (!user) {
     throw new ApiError(404, "User is not authorise to change the password ");
@@ -250,7 +250,6 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
   if (!avatar) {
     throw new ApiError(400, "Error while uploading the on cloudyanary");
   }
-  console.log(avatar);
   const user = await User.findByIdAndUpdate(
     req.user._id,
     {
@@ -272,7 +271,6 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
   if (!coverImage) {
     throw new ApiError(400, "Error while uploading the on cloudyanary");
   }
-  console.log(coverImage);
   const user = await User.findByIdAndUpdate(
     req.user._id,
     {
@@ -323,13 +321,15 @@ const getUserChannalProfile = asyncHandler (async(req,res)=>{
         },
         subscribedToCount:{
           $size:"$subscribedTo"
-        },isSubscribed:{
+        },
+        isSubscribed:{
           $cond:{
             if:{
               $in:[req.user._id,"$subscribers.subscriber"],
+            },
               then:true,
               else:false
-            }
+            
           }
                 }
       }
@@ -351,6 +351,10 @@ const getUserChannalProfile = asyncHandler (async(req,res)=>{
   if(!channel){
     throw new ApiError(404,"Channal does not exist")
   }
+  if (!channel || channel.length === 0) {
+    throw new ApiError(404, "Channel does not exist");
+  }
+
   // change the arry to the object
   return res.status(200).json(new ApiResponse(200,channel[0],"User Channal Profile Fetched Successfully"))
   
@@ -395,15 +399,11 @@ const user = await User.aggregate([
           }
         }
       }
-      ]
-      // making data in the form of object to help the frontend
-      
-    }
-    
+      ] 
+    } 
   }
-
-
 ])
+      // making data in the form of object to help the frontend
 return res.status(200).json(new ApiResponse(200,user[0].watchHistory,"Watch History Fetched Successfully"))
 
 })

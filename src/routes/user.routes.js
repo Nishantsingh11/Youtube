@@ -38,7 +38,7 @@ router.route("/current-user").get(verifyJWT, getCurrentUser);
 router.route("/update").patch(verifyJWT, updateUserDetailes);
 router.route("/update/avatar").patch(verifyJWT, upload.single("avatar"), updateUserAvatar);
 router.route("/update/cover-image").patch(verifyJWT, upload.single("coverImage"), updateUserCoverImage);
-router.route("/channel/:username").get(getUserChannalProfile);
+router.route("/channel/:username").get(verifyJWT,getUserChannalProfile);
 router.route("/watch-history").get(verifyJWT, getWatchHistory);
 
 
