@@ -238,6 +238,7 @@ const updateUserDetailes = asyncHandler(async (req, res) => {
     },
     { new: true }
   );
+  return res.status(200).json(new ApiResponse(200, user, "User info updated"));
 });
 const updateUserAvatar = asyncHandler(async (req, res) => {
   const avatarLocalPath = req.file?.path;
@@ -284,6 +285,74 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, user, "Cover immage is updated"));
 });
+// geting some knowladge about the aggregation pipline
+const getUserChannalProfile = asyncHandler (async(req,res)=>{
+  const {username} = req.params
+  if(!username){
+    throw new ApiError(400,"Username is required to get the user profile")
+  }
+
+  const channel = await User.aggregate([
+    {
+      $match: {
+        username: username
+      }
+    },
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "channel",
+        as: "subscribers"
+      }
+    },
+    {
+      $lookup: {
+        from: "subscribers",
+        localField: "_id",
+        foreignField: "subscriber",
+        as: "subscribedTo"
+      }
+    },
+    {
+      $addFields:{
+        subscribersCount:{
+          $size:"$subscribers"
+        },
+        subscribedToCount:{
+          $size:"$subscribedTo"
+        },isSubscribed:{
+          $cond:{
+            if:{
+              $in:[req.user._id,"$subscribers.subscriber"],
+              then:true,
+              else:false
+            }
+          }
+                }
+      }
+    },
+    {
+      $project:{
+        fullName:1,
+        username:1,
+        email:1,
+        avatar:1,
+        coverImage:1,
+        subscribersCount:1,
+        subscribedToCount:1,
+        isSubscribed:1
+      
+      }
+    }
+  ])
+  if(!channel){
+    throw new ApiError(404,"Channal does not exist")
+  }
+  // change the arry to the object
+  return.status(200).json(new ApiResponse(200,channel[0],"User Channal Profile Fetched Successfully")
+  
+})
 export {
   registerUser,
   loginUser,
@@ -294,4 +363,5 @@ export {
   updateUserDetailes,
   updateUserAvatar,
   updateUserCoverImage,
+  getUserChannalProfile
 };
