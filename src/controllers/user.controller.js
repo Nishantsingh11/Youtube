@@ -4,6 +4,7 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 const generateAccessAndrefreshToken = async (userId) => {
   try {
     const user = await User.findById(userId);
@@ -260,6 +261,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     { new: true }
   ).select("-password");
   return res.status(200).json(new ApiResponse(200, user, "Avatar is updated"));
+  //delete the file from the local storage
 });
 const updateUserCoverImage = asyncHandler(async (req, res) => {
   const coverImageLocalPath = req.file?.path;
@@ -350,8 +352,60 @@ const getUserChannalProfile = asyncHandler (async(req,res)=>{
     throw new ApiError(404,"Channal does not exist")
   }
   // change the arry to the object
-  return.status(200).json(new ApiResponse(200,channel[0],"User Channal Profile Fetched Successfully")
+  return res.status(200).json(new ApiResponse(200,channel[0],"User Channal Profile Fetched Successfully"))
   
+})
+
+// get the watch history of the user 
+// here we have to do the nested lookup
+const getWatchHistory = asyncHandler(async(req,res)=>{
+const user = await User.aggregate([
+  {
+    $match:{
+    _id: new mongoose.Types.ObjectId(req.user._id)
+    }
+  },{
+    $lookup:{
+      from:"videos",
+      localField:"watchHistory",
+      foreignField:"_id",
+      as:"watchHistory",
+      pipeline:[
+        {
+        $lookup:{
+          from:"users",
+          localField:"owner",
+          foreignField:"_id",
+          as:"owner",
+          pipeline:[
+            {
+            $project:{
+              fullName:1,
+              username:1,
+              avatar:1
+            }
+          }
+      ]
+        },
+      },
+      {
+        $addFields:{
+          owner:{
+            $arrayElemAt:["$owner",0]
+          }
+        }
+      }
+      ]
+      // making data in the form of object to help the frontend
+      
+    }
+    
+  }
+
+
+])
+return res.status(200).json(new ApiResponse(200,user[0].watchHistory,"Watch History Fetched Successfully"))
+
 })
 export {
   registerUser,
@@ -363,5 +417,6 @@ export {
   updateUserDetailes,
   updateUserAvatar,
   updateUserCoverImage,
-  getUserChannalProfile
+  getUserChannalProfile,
+  getWatchHistory
 };
