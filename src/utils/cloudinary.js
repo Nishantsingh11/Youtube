@@ -19,5 +19,22 @@ const uploadOnCloudinary = async (localPath) => {
     fs.unlinkSync(localPath);
   }
 };
+const uploadVideoOnCloudinary = async (localPath)=>{
+  try{
+    if(!localPath) return null;
+    const response = await cloudinary.uploader.upload(localPath,{
+      resource_type:"video"
+    })
+    console.log("response for video upload",response,response.url);
+    console.log("File is uploaded on the Cloudinary",response,response.url);
+    // todo for video
+    // if the video is uploaded successfully then delete the video from the local path
+    fs.unlinkSync(localPath)
+    return response
+  }
+  catch(err){
+    fs.unlinkSync(localPath)
+  }
+}
 
-export { uploadOnCloudinary };
+export { uploadOnCloudinary,uploadVideoOnCloudinary }
