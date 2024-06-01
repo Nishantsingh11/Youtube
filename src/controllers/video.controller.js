@@ -59,19 +59,14 @@ const publishAVideo = asyncHandler(async (req, res) => {
     // get the video url
     // create the video in the database
     // return the video url
-    console.log("req.files",req.files);
     const videoFilePath = req.files.video[0].path;
     const thumbnailFilePath = req.files.thumbnail[0].path;
-    console.log("videoFilePath",videoFilePath);
-    console.log("thumbnailFilePath",thumbnailFilePath);
-    if(!videoFilePath || !thumbnailFilePath){
+        if(!videoFilePath || !thumbnailFilePath){
     return res.status(400).json(new ApiError(400,"Video is required"))
    }
   
    const thumbnailUrl = await uploadOnCloudinary(thumbnailFilePath)
    const videoURl = await uploadVideoOnCloudinary(videoFilePath)
-   console.log("videoURl",videoURl);
-   console.log("thumbnailUrl",thumbnailUrl);
    
     if(!videoURl || !thumbnailUrl){
      return res.status(500).json(new ApiError(500,"Internal server error"))
@@ -84,7 +79,6 @@ const publishAVideo = asyncHandler(async (req, res) => {
         duration:videoURl.duration,
         thumbnail:thumbnailUrl
     })
-    console.log("video",video);
     await video.save()
     res.status(201).json(new ApiResponse(201,video,"Video published successfully"))
 })
